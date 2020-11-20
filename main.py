@@ -2,6 +2,7 @@ import pymongo
 import telebot
 import sys
 import user_tags
+from current_lesson import current_lesson, next_lesson
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -71,6 +72,21 @@ def handle_users_with_tag_end(tg_message):
 
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
+
+
+# прислать текущие уроки
+@bot.message_handler(commands=['now'])
+def send_message(message):
+    text = current_lesson()
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# прислать следующие уроки
+@bot.message_handler(commands=['next'])
+def send_message(message):
+    text = next_lesson()
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
 
 # прислать подсказку с доступными командами
 @bot.message_handler(commands=['help'])
