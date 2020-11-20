@@ -1,7 +1,7 @@
 import pymongo
 import telebot
 import sys
-from current_lesson import current_lesson
+from current_lesson import current_lesson, next_lesson
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -31,7 +31,13 @@ def msg(db_msg_id, mongo_db=db):
 @bot.message_handler(commands=['now'])
 def send_message(message):
     text = current_lesson()
-    print(text)
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# прислать следующие уроки
+@bot.message_handler(commands=['next'])
+def send_message(message):
+    text = next_lesson()
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 
