@@ -3,7 +3,6 @@ import telebot
 import sys
 import user_tags
 from current_lesson import current_lesson, next_lesson, schedule_for_tomorrow
-
 import teachers_parser
 
 # получить ключи доступа из окружения
