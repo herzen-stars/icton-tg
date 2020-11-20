@@ -172,3 +172,42 @@ def next_lesson():
     message = '\n'.join(message)
 
     return message
+
+def schedule_for_tomorrow():
+    dow = datetime.now().weekday() + 1
+    if dow == 7:
+        return 'На завтра занятия не запланированы'
+    elif dow == 8:
+        dow = 1
+        schedules = []
+        for _group in schedule:
+            schedules.append(_group[dow - 1])
+    else:
+        schedules = []
+        for _group in schedule:
+            schedules.append(_group[dow - 1])
+
+    _return = []
+    counter = 0
+    group_ids = []
+
+    # get froup ids
+    for _group in config_file["groups"]:
+        entry = f"{_group['group_id']}-{_group['subgroup']}"
+        group_ids.append(entry)
+
+    for _schedule in schedules:
+        _return.append(f'\n<b>Расписание на завтра (гр. {group_ids[counter]}):</b>\n')
+        counter += 1
+        for lesson in _schedule:
+            start = lesson['start_time']
+            start = f'{start[0:2]}:{start[2:4]}'
+            end = lesson['end_time']
+            end = f'{end[0:2]}:{end[2:4]}'
+            name = lesson['name']
+            _return.append(f'{start} - {end}: {name}')
+        if 'завтра' in _return[-1]:
+            _return.append('Занятий не запланировано')
+
+    _return = '\n'.join(_return)
+    return _return

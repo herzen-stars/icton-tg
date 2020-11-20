@@ -2,7 +2,7 @@ import pymongo
 import telebot
 import sys
 import user_tags
-from current_lesson import current_lesson, next_lesson
+from current_lesson import current_lesson, next_lesson, schedule_for_tomorrow
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -85,6 +85,13 @@ def send_message(message):
 @bot.message_handler(commands=['next'])
 def send_message(message):
     text = next_lesson()
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# вывести расписание на завтра
+@bot.message_handler(commands=['tomorrow'])
+def send_message(message):
+    text = schedule_for_tomorrow()
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 

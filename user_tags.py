@@ -1,10 +1,3 @@
-import pprint
-
-import pymongo
-import telebot
-import sys
-
-
 class UserTagsException(BaseException):
     msg = "Error: "
 
