@@ -40,6 +40,13 @@ def send_message(message):
     text = next_lesson()
     bot.send_message(message.chat.id, text, parse_mode="html")
 
+# прислать подсказку с доступными командами
+@bot.message_handler(commands=['help'])
+def send_message(message):
+    _commands = ['<b>Доступные команды</b>\n', '/now - текущие занятия', '/next - следующие занятия', '/help - помощь']
+    text = '\n'.join(_commands)
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
 
 # запустить работу бота в бесконечном цикле
 if __name__ == '__main__':

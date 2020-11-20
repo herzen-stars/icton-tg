@@ -112,6 +112,8 @@ def current_lesson():
             lesson = 'перерыв'
         else:
             lesson = raw_return[group]['name']
+            link = raw_return[group]['course_link']
+            lesson = f'<a href="{link}">{lesson}</a>'
 
         if group_[1] != '0':
             msg = f"Гр. {group_[0]}, пг. {group_[1]}: {lesson}."
@@ -158,6 +160,8 @@ def next_lesson():
             lesson = 'занятия на сегодня окончены'
         else:
             lesson = raw_return[group]['name']
+            link = raw_return[group]['course_link']
+            lesson = f'<a href="{link}">{lesson}</a>'
 
         if group_[1] != '0':
             msg = f"Гр. {group_[0]}, пг. {group_[1]}: {lesson}."
