@@ -65,8 +65,10 @@ def parse_teacher(name, page=1):
 
             result_args = (result_name, result_phone, result_email)
             result.append('\n'.join(result_args))
+        else:
+            result = ['А на ней армяне в {} играют'.format(resp.status_code)]
 
     return 'Страница {} из {}\n\n{}'.format(
-        page, pages_qty, '\n\n'.join(result)
+        page, pages_qty, '\n\n'.join(result) or 'Не найдено!'
         )
 
