@@ -120,3 +120,49 @@ def current_lesson():
     message = '\n'.join(message)
 
     return message
+
+def next_lesson_for_group(_schedule):
+    dow = datetime.now().weekday()
+    if dow == 6:
+        return None
+
+    today = _schedule[dow]
+    for i in range(len(today)):
+        lesson = today[i]
+        if not i == len(today) and int(lesson["start_time"]) <= current_time() <= int(lesson["end_time"]):
+            return today[i + 1]
+        elif not i + 1 == len(today):
+            if int(lesson["end_time"]) <= current_time() <= int(today[i + 1]["start_time"]):
+                return today[i + 1]
+        else:
+            continue
+
+    return None
+
+def next_lesson():
+    raw_return = {}
+    config = config_file['groups']
+    for i in range(len(schedule)):
+        group = f'{config[i]["group_id"]}_{config[i]["subgroup"]}'
+        raw_return[group] = next_lesson_for_group(schedule[i])
+
+    message = []
+    message.append('<b>Следующее занятие:</b>')
+
+    for group in raw_return:
+        group_ = group.split('_')
+
+        if raw_return[group] == None:
+            lesson = 'занятия на сегодня окончены'
+        else:
+            lesson = raw_return[group]['name']
+
+        if group_[1] != '0':
+            msg = f"Гр. {group_[0]}, пг. {group_[1]}: {lesson}."
+        else:
+            msg = f"Гр. {group_[0]}: {lesson}."
+        message.append(msg)
+
+    message = '\n'.join(message)
+
+    return message
