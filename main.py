@@ -78,6 +78,13 @@ def handle_users_with_tag_end(tg_message):
 def send_message(message, text=msg('1')):
     return bot.send_message(message.chat.id, text)
 
+# прислать подсказку с доступными командами
+@bot.message_handler(commands=['help'])
+def send_message(message):
+    _commands = ['<b>Доступные команды</b>\n', '/now - текущие занятия', '/next - следующие занятия', '/help - помощь']
+    text = '\n'.join(_commands)
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
 
 # запустить работу бота в бесконечном цикле
 if __name__ == '__main__':
