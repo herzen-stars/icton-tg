@@ -1,3 +1,4 @@
 pymongo
 pyTelegramBotAPI
 dnspython
+requests
