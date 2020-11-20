@@ -99,9 +99,7 @@ def handle_tag_add_start(tg_message):
 
 def handle_tag_add_end(tg_message):
     try:
-        index = tg_message.text.find(" ")
-
-        tag_name, tag_description = tg_message.text[:index], tg_message.text[index:]
+        tag_name, tag_description = tg_message.text.split(' ', 1)
 
         user_tags.add_tag(tag_name, tag_description, db)
 
@@ -117,11 +115,8 @@ def handle_get_all_tags(tg_message):
 
         message = ""
 
-        it = 1
-
-        for tag in tags:
-            message += str(it) + ". [" + tag['tag_name'] + "] - " + tag['tag_description'] + "\n"
-            it += 1
+        for i, tag in enumerate(tags, 1):
+            message += '{}. [{}] - {}\n'.format(i, tag['tag_name'], tag['tag_description'])
 
         bot.send_message(tg_message.chat.id, message)
 
