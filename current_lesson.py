@@ -59,11 +59,11 @@ if (not s_path.is_file()) or "schedule_expiration_date" not in config_file or ex
             sys.exit()
 
         with open(s_path, "w") as file:
-            json.dump(schedule, file, indent=4, ensure_ascii=False)
+            json.dump(schedule, file, indent=4)
 
         config_file["schedule_expiration_date"] = expiration_date()
         with open(c_path, "w") as file:
-            json.dump(config_file, file, indent=4, ensure_ascii=False)
+            json.dump(config_file, file, indent=4)
 
 else:
     with open(s_path, "r") as file:

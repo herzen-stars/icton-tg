@@ -47,7 +47,7 @@ def handle_tag_adding_end(tg_message):
 
         user_tags.add_tag_to_user(args[0], args[1], db)
     except user_tags.UserTagsException as e:
-        send_message(tg_message, e.msg)
+        bot.send_message(tg_message.chat.id, e.msg)
 
 
 @bot.message_handler(commands=['get_users_with_tag'])
@@ -68,16 +68,10 @@ def handle_users_with_tag_end(tg_message):
             user_msg = "@"
             user_msg += str(user.username) + " "
             users_msg += user_msg
-        send_message(tg_message, users_msg)
+        bot.send_message(tg_message.chat.id, users_msg)
 
     except user_tags.UserTagsException as e:
-        send_message(tg_message, e.msg)
-
-
-# test run
-@bot.message_handler(content_types=['text'])
-def send_message(message, text=msg('1')):
-    return bot.send_message(message.chat.id, text)
+        bot.send_message(tg_message.chat.id, e.msg)
 
 
 # прислать текущие уроки
