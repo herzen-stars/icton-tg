@@ -1,6 +1,7 @@
 import pymongo
 import telebot
 import sys
+from current_lesson import current_lesson
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
