@@ -20,19 +20,25 @@ def register_user(user, db):
     })
 
 
-def add_tag_to_user(username, tag, db):
-    print("@" + __name__ + ": adding tag " + tag + " to user " + username)
+def add_tag_to_user(username, tag_name, db):
+    print("@" + __name__ + ": adding tag '" + tag_name + "' to user " + username)
     users = db["users"]
+    tags = db["tags"]
     db_user = users.find_one({'tg_user_name': username})
 
     if db_user is None:
         raise UserTagsException("user with given username is not found")
 
+    db_tag = tags.find_one({'tag_name': tag_name})
+
+    if db_tag is None:
+        raise UserTagsException("no such tag")
+
     db_user = users.find_one({'tg_user_name': username})
     db_user_tags = db_user['tags']
-    if tag in db_user_tags:
+    if tag_name in db_user_tags:
         raise UserTagsException("user already has this tag")
-    db_user_tags.append(tag)
+    db_user_tags.append(tag_name)
     users.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': db_user['tags']}})
 
 
@@ -49,3 +55,36 @@ def get_users_with_tag(tag, chat, bot, db):
         raise UserTagsException("no users with this tag found")
 
     return tg_users
+
+
+def add_tag(tag_name, tag_description, db):
+    print("@" + __name__ + ": creating tag '" + tag_name)
+    tags = db["tags"]
+    db_tag = tags.find_one({'tag_name': tag_name})
+    if db_tag is not None:
+        raise UserTagsException("this tag already exists")
+
+    tags.insert_one({
+        'tag_name': tag_name,
+        'tag_description': tag_description
+    })
+
+
+def get_all_tags(db):
+    _tags = db["tags"]
+
+    db_tags = _tags.find()
+
+    tags = list()
+
+    for tag in db_tags:
+        print(tag)
+        tags.append({
+            'tag_name': tag['tag_name'],
+            'tag_description': tag['tag_description']
+        })
+
+    if len(tags) == 0:
+        raise UserTagsException("no tags found, try registering one!")
+
+    return tags

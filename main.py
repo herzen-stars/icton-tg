@@ -42,7 +42,7 @@ def handle_user_reg(tg_message):
 # прикрепить тэг к пользователю
 @bot.message_handler(commands=['add_tag_to_user'])
 def handle_tag_adding_start(tg_message):
-    response_msg = send_message(tg_message, "Укажи студента и тэг")
+    response_msg = bot.send_message(tg_message.chat.id, "Укажи студента и тэг")
     bot.register_next_step_handler(response_msg, handle_tag_adding_end)
 
 
@@ -52,18 +52,22 @@ def handle_tag_adding_end(tg_message):
         args = message.split(" ")
 
         if len(args) < 2:
-            send_message(tg_message, "Упс, недостаточно аргументов")
+            bot.send_message(tg_message.chat.id, "Упс, недостаточно аргументов")
             return
 
-        user_tags.add_tag_to_user(args[0], args[1], db)
+        username = args[0]
+        username = username[1:]
+        tag_name = args[1]
+
+        user_tags.add_tag_to_user(username, tag_name, db)
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
 # уведомить пользователей с указанным тэгом
-@bot.message_handler(commands=['get_users_with_tag'])
+@bot.message_handler(commands=['notify_users_with_tag'])
 def handle_users_with_tag_start(tg_message):
-    response_msg = send_message(tg_message, "Укажи тэг")
+    response_msg = bot.send_message(tg_message.chat.id, "Укажи тэг")
     bot.register_next_step_handler(response_msg, handle_users_with_tag_end)
 
 
@@ -80,6 +84,45 @@ def handle_users_with_tag_end(tg_message):
             user_msg += str(user.username) + " "
             users_msg += user_msg
         bot.send_message(tg_message.chat.id, users_msg)
+
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+# создать тэг в бд
+@bot.message_handler(commands=['create_tag'])
+def handle_tag_add_start(tg_message):
+    response_msg = bot.send_message(tg_message.chat.id, "Укажи название и описание тэга")
+    bot.register_next_step_handler(response_msg, handle_tag_add_end)
+
+
+def handle_tag_add_end(tg_message):
+    try:
+        index = tg_message.text.find(" ")
+
+        tag_name, tag_description = tg_message.text[:index], tg_message.text[index:]
+
+        user_tags.add_tag(tag_name, tag_description, db)
+
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+# получить названия и описания всех тэгов
+@bot.message_handler(commands=['get_all_tags'])
+def handle_get_all_tags(tg_message):
+    try:
+        tags = user_tags.get_all_tags(db)
+
+        message = ""
+
+        it = 1
+
+        for tag in tags:
+            message += str(it) + ". [" + tag['tag_name'] + "] - " + tag['tag_description'] + "\n"
+            it += 1
+
+        bot.send_message(tg_message.chat.id, message)
 
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
@@ -106,8 +149,10 @@ def send_message(message):
                  '/now - текущие занятия',
                  '/next - следующие занятия',
                  '/help - помощь',
+                 '/create_tag - создать новый тэг',
+                 '/get_all_tags - получить список тэгов'
                  '/add_tag_to_user - прикрепить к пользователю тэг',
-                 '/get_users_with_tag - уведомить пользователей с указанным тэгом'
+                 '/notify_users_with_tag - уведомить пользователей с указанным тэгом'
                  ]
     text = '\n'.join(_commands)
     bot.send_message(message.chat.id, text, parse_mode="html")
