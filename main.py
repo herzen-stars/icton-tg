@@ -2,6 +2,7 @@ import pymongo
 import telebot
 import sys
 import user_tags
+from current_lesson import current_lesson, next_lesson
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -77,6 +78,28 @@ def handle_users_with_tag_end(tg_message):
 @bot.message_handler(content_types=['text'])
 def send_message(message, text=msg('1')):
     return bot.send_message(message.chat.id, text)
+
+
+# прислать текущие уроки
+@bot.message_handler(commands=['now'])
+def send_message(message):
+    text = current_lesson()
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# прислать следующие уроки
+@bot.message_handler(commands=['next'])
+def send_message(message):
+    text = next_lesson()
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# прислать подсказку с доступными командами
+@bot.message_handler(commands=['help'])
+def send_message(message):
+    _commands = ['<b>Доступные команды</b>\n', '/now - текущие занятия', '/next - следующие занятия', '/help - помощь']
+    text = '\n'.join(_commands)
+    bot.send_message(message.chat.id, text, parse_mode="html")
 
 
 # запустить работу бота в бесконечном цикле
