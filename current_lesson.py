@@ -108,6 +108,8 @@ def current_lesson():
 
         if raw_return[group] == None:
             lesson = 'занятий нет'
+        elif raw_return[group]['name'] == 'break':
+            lesson = 'перерыв'
         else:
             lesson = raw_return[group]['name']
 
