@@ -30,6 +30,16 @@ def msg(db_msg_id, mongo_db=db):
     return messages.find_one({'_id': db_msg_id})['msg']
 
 
+# зарегистрировать пользователя в бд (и другая инициализация)
+@bot.message_handler(commands=['start'])
+def handle_user_reg(tg_message):
+    try:
+        user_tags.register_user(tg_message.from_user, db)
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+# прикрепить тэг к пользователю
 @bot.message_handler(commands=['add_tag_to_user'])
 def handle_tag_adding_start(tg_message):
     response_msg = send_message(tg_message, "Укажи студента и тэг")
@@ -50,6 +60,7 @@ def handle_tag_adding_end(tg_message):
         bot.send_message(tg_message.chat.id, e.msg)
 
 
+# уведомить пользователей с указанным тэгом
 @bot.message_handler(commands=['get_users_with_tag'])
 def handle_users_with_tag_start(tg_message):
     response_msg = send_message(tg_message, "Укажи тэг")
@@ -91,7 +102,13 @@ def send_message(message):
 # прислать подсказку с доступными командами
 @bot.message_handler(commands=['help'])
 def send_message(message):
-    _commands = ['<b>Доступные команды</b>\n', '/now - текущие занятия', '/next - следующие занятия', '/help - помощь']
+    _commands = ['<b>Доступные команды</b>\n',
+                 '/now - текущие занятия',
+                 '/next - следующие занятия',
+                 '/help - помощь',
+                 '/add_tag_to_user - прикрепить к пользователю тэг',
+                 '/get_users_with_tag - уведомить пользователей с указанным тэгом'
+                 ]
     text = '\n'.join(_commands)
     bot.send_message(message.chat.id, text, parse_mode="html")
 
