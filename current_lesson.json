@@ -1,0 +1,6 @@
+{
+    "group_id": "12460",
+    "subgroup": "0",
+    "schedule_provider_url": "https://herzen-timetable.herokuapp.com/api/timetable/group_forCurrentWeek",
+    "schedule_expiration_date": "2020-11-21 23:59"
+}
