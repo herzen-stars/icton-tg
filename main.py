@@ -27,10 +27,12 @@ def msg(db_msg_id, mongo_db=db):
     messages = mongo_db['messages']
     return messages.find_one({'_id': db_msg_id})['msg']
 
-# test run
-@bot.message_handler(content_types=['text'])
-def send_message(message, text=msg('1')):
-    bot.send_message(message.chat.id, text)
+# прислать текущие уроки
+@bot.message_handler(commands=['now'])
+def send_message(message):
+    text = current_lesson()
+    print(text)
+    bot.send_message(message.chat.id, text, parse_mode="html")
 
 
 # запустить работу бота в бесконечном цикле
