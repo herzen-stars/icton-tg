@@ -1,5 +1,5 @@
 class UserTagsException(BaseException):
-    msg = "Error: "
+    msg = "Ошибка:\n"
 
     def __init__(self, _msg=""):
         self.msg += _msg
@@ -10,7 +10,7 @@ def register_user(user, db):
     users = db["users"]
     db_user = users.find_one({'tg_user_id': user.id})
     if db_user is not None:
-        raise UserTagsException("user already exists")
+        raise UserTagsException("Такой пользователь уже существует")
     users.insert_one({
         'tg_user_id': user.id,
         'tg_user_name': user.username,
@@ -27,25 +27,32 @@ def add_tags_to_user(username, _tags, db):
     db_user = users.find_one({'tg_user_name': username})
 
     if db_user is None:
-        raise UserTagsException("user with given username is not found")
+        raise UserTagsException("Я не знаю такого пользователя, возможно он не зарегистрировался, пусть попробует "
+                                "написать мне /register_me")
 
     for tag_name in _tags:
         db_tag = tags.find_one({'tag_name': tag_name})
 
         if db_tag is None:
-            raise UserTagsException("no such tag")
+            raise UserTagsException("Такого тэга не существует")
 
         db_user = users.find_one({'tg_user_name': username})
         db_user_tags = db_user['tags']
         if tag_name in db_user_tags:
-            raise UserTagsException("user already has this tag")
+            raise UserTagsException("К пользователю уже прикреплен данный тэг")
         db_user_tags.append(tag_name)
         users.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': db_user['tags']}})
 
 
-def get_users_with_all_tags(tags, chat, bot, db):
+def get_users_with_tags(tags, _type, chat, bot, db):
     users = db["users"]
-    db_users = users.find({'tags': {'$all': tags}})
+
+    if _type == "all":
+        query = '$all'
+    else:
+        query = '$in'
+
+    db_users = users.find({'tags': {query: tags}})
 
     tg_users = list()
 
@@ -53,22 +60,7 @@ def get_users_with_all_tags(tags, chat, bot, db):
         tg_users.append(bot.get_chat_member(chat.id, user['tg_user_id']).user)
 
     if len(tg_users) == 0:
-        raise UserTagsException("no users with this tag found")
-
-    return tg_users
-
-
-def get_users_with_tags(tags, chat, bot, db):
-    users = db["users"]
-    db_users = users.find({'tags': {'$in': tags}})
-
-    tg_users = list()
-
-    for user in db_users:
-        tg_users.append(bot.get_chat_member(chat.id, user['tg_user_id']).user)
-
-    if len(tg_users) == 0:
-        raise UserTagsException("no users with this tag found")
+        raise UserTagsException("Нет пользователей с таким тэгом.")
 
     return tg_users
 
@@ -78,7 +70,7 @@ def add_tag(tag_name, tag_description, db):
     tags = db["tags"]
     db_tag = tags.find_one({'tag_name': tag_name})
     if db_tag is not None:
-        raise UserTagsException("this tag already exists")
+        raise UserTagsException("Такой тэг уже существует.")
 
     tags.insert_one({
         'tag_name': tag_name,
@@ -94,13 +86,12 @@ def get_all_tags(db):
     tags = list()
 
     for tag in db_tags:
-        print(tag)
         tags.append({
             'tag_name': tag['tag_name'],
             'tag_description': tag['tag_description']
         })
 
     if len(tags) == 0:
-        raise UserTagsException("no tags found, try registering one!")
+        raise UserTagsException("Вы еще не создали ни одного тэга")
 
     return tags
