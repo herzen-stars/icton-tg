@@ -86,7 +86,6 @@ def get_all_tags(db):
     tags = list()
 
     for tag in db_tags:
-        print(tag)
         tags.append({
             'tag_name': tag['tag_name'],
             'tag_description': tag['tag_description']
