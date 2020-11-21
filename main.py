@@ -53,12 +53,12 @@ def handle_tag_adding_start(tg_message):
         check_user_for_admin_right(tg_message.from_user, tg_message.chat)
 
         response_msg = bot.send_message(tg_message.chat.id, "Укажи студента и тэг")
-        bot.register_next_step_handler(response_msg, handle_tag_adding_end, response_msg)
+        bot.register_next_step_handler(response_msg, handle_tag_adding_end)
     except NoAdminRights as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
-def handle_tag_adding_end(tg_message, info_msg):
+def handle_tag_adding_end(tg_message):
     try:
         username, tags = tg_message.text.split(' ', 1)
 
@@ -92,22 +92,17 @@ def handle_tag_all_start(tg_message):
 
 
 def handle_tag_middle(tg_message, _type):
-    try:
-        check_user_for_admin_right(tg_message.from_user, tg_message.chat)
-        if tg_message.reply_to_message is None:
-            bot.send_message(tg_message.chat.id,
-                             "Ответь этой командой на сообщение, под которым будут отмечены пользователи")
-            return
+    if tg_message.reply_to_message is None:
+        bot.send_message(tg_message.chat.id,
+                         "Ответь этой командой на сообщение, под которым будут отмечены пользователи")
+        return
 
-        # удалить сообщение с командой, оно нам больше не нужно
-        bot.delete_message(tg_message.chat.id, tg_message.message_id)
+    # удалить сообщение с командой, оно нам больше не нужно
+    bot.delete_message(tg_message.chat.id, tg_message.message_id)
 
-        # отправить подсказку и перенаправить ответ
-        response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги")
-        bot.register_next_step_handler(response_msg, handle_tag_end, tg_message.reply_to_message, response_msg, _type)
-
-    except NoAdminRights as e:
-        bot.send_message(tg_message.chat.id, e.msg)
+    # отправить подсказку и перенаправить ответ
+    response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги")
+    bot.register_next_step_handler(response_msg, handle_tag_end, tg_message.reply_to_message, response_msg, _type)
 
 
 # главный обработчик уведомления пользователей по тэгам
@@ -358,8 +353,8 @@ def send_message(message):
                  '/create_tag - создать новый тэг - <b><u>адм.</u></b>',
                  '/tags - получить список тэгов',
                  '/add_tags - прикрепить к пользователю тэг - <b><u>адм.</u></b>',
-                 '/tag - уведомить всех пользователей с указанными тэгами - <b><u>адм.</u></b>',
-                 '/tag_all - уведомить только пользователей, имеющих все указанные теги - <b><u>адм.</u></b>',
+                 '/tag - уведомить всех пользователей с указанными тэгами',
+                 '/tag_all - уведомить только пользователей, имеющих все указанные теги',
                  '\n<b>Прочее</b>',
                  '/help - помощь'
                  ]
