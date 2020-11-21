@@ -20,8 +20,8 @@ def register_user(user, db):
     })
 
 
-def add_tag_to_user(username, tag_name, db):
-    print("@" + __name__ + ": adding tag '" + tag_name + "' to user " + username)
+def add_tags_to_user(username, _tags, db):
+    print("@" + __name__ + ": adding tags to user " + username)
     users = db["users"]
     tags = db["tags"]
     db_user = users.find_one({'tg_user_name': username})
@@ -29,22 +29,38 @@ def add_tag_to_user(username, tag_name, db):
     if db_user is None:
         raise UserTagsException("user with given username is not found")
 
-    db_tag = tags.find_one({'tag_name': tag_name})
+    for tag_name in _tags:
+        db_tag = tags.find_one({'tag_name': tag_name})
 
-    if db_tag is None:
-        raise UserTagsException("no such tag")
+        if db_tag is None:
+            raise UserTagsException("no such tag")
 
-    db_user = users.find_one({'tg_user_name': username})
-    db_user_tags = db_user['tags']
-    if tag_name in db_user_tags:
-        raise UserTagsException("user already has this tag")
-    db_user_tags.append(tag_name)
-    users.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': db_user['tags']}})
+        db_user = users.find_one({'tg_user_name': username})
+        db_user_tags = db_user['tags']
+        if tag_name in db_user_tags:
+            raise UserTagsException("user already has this tag")
+        db_user_tags.append(tag_name)
+        users.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': db_user['tags']}})
 
 
-def get_users_with_tag(tags, chat, bot, db):
+def get_users_with_all_tags(tags, chat, bot, db):
     users = db["users"]
     db_users = users.find({'tags': {'$all': tags}})
+
+    tg_users = list()
+
+    for user in db_users:
+        tg_users.append(bot.get_chat_member(chat.id, user['tg_user_id']).user)
+
+    if len(tg_users) == 0:
+        raise UserTagsException("no users with this tag found")
+
+    return tg_users
+
+
+def get_users_with_tags(tags, chat, bot, db):
+    users = db["users"]
+    db_users = users.find({'tags': {'$in': tags}})
 
     tg_users = list()
 

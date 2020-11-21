@@ -1,6 +1,5 @@
 import pymongo
 import telebot
-import sys
 import user_tags
 from current_lesson import *
 import teachers_parser
@@ -42,7 +41,7 @@ def handle_user_reg(tg_message):
 
 
 # прикрепить тэг к пользователю
-@bot.message_handler(commands=['add_tag'])
+@bot.message_handler(commands=['add_tags'])
 def handle_tag_adding_start(tg_message):
     response_msg = bot.send_message(tg_message.chat.id, "Укажи студента и тэг")
     bot.register_next_step_handler(response_msg, handle_tag_adding_end)
@@ -50,34 +49,58 @@ def handle_tag_adding_start(tg_message):
 
 def handle_tag_adding_end(tg_message):
     try:
-        message = tg_message.text
-        args = message.split(" ")
 
-        if len(args) < 2:
+        username, tags = tg_message.text.split(' ', 1)
+
+        if username == "" or tags == "":
             bot.send_message(tg_message.chat.id, "Упс, недостаточно аргументов")
             return
 
-        username = args[0]
         username = username[1:]
-        tag_name = args[1]
+        tags = tags.split(" ")
 
-        user_tags.add_tag_to_user(username, tag_name, db)
+        user_tags.add_tags_to_user(username, tags, db)
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
-# уведомить пользователей с указанным тэгом
+# уведомить пользователей с хотя бы одним из указанных тэгов
 @bot.message_handler(commands=['tag'])
-def handle_users_with_tag_start(tg_message):
-    response_msg = bot.send_message(tg_message.chat.id, "Укажи тэг")
-    bot.register_next_step_handler(response_msg, handle_users_with_tag_end)
+def handle_tag_start(tg_message):
+    response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги")
+    bot.register_next_step_handler(response_msg, handle_tag_end)
 
 
-def handle_users_with_tag_end(tg_message):
+def handle_tag_end(tg_message):
     try:
         tags = tg_message.text.split(" ")
 
-        users = user_tags.get_users_with_tag(tags, tg_message.chat, bot, db)
+        users = user_tags.get_users_with_tags(tags, tg_message.chat, bot, db)
+
+        users_msg = ""
+
+        for user in users:
+            user_msg = "@"
+            user_msg += str(user.username) + " "
+            users_msg += user_msg
+        bot.send_message(tg_message.chat.id, users_msg)
+
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+# уведомить пользователей со всеми указанными тэгов
+@bot.message_handler(commands=['tag_all'])
+def handle_tag_all_start(tg_message):
+    response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги")
+    bot.register_next_step_handler(response_msg, handle_tag_all_end)
+
+
+def handle_tag_all_end(tg_message):
+    try:
+        tags = tg_message.text.split(" ")
+
+        users = user_tags.get_users_with_all_tags(tags, tg_message.chat, bot, db)
 
         users_msg = ""
 
