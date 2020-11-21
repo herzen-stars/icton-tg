@@ -2,8 +2,9 @@ import pymongo
 import telebot
 import sys
 import user_tags
-from current_lesson import current_lesson, next_lesson, schedule_for_tomorrow, schedule_for_today
+from current_lesson import *
 import teachers_parser
+from faq_feature import *
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -41,7 +42,7 @@ def handle_user_reg(tg_message):
 
 
 # прикрепить тэг к пользователю
-@bot.message_handler(commands=['add_tag_to_user'])
+@bot.message_handler(commands=['add_tag'])
 def handle_tag_adding_start(tg_message):
     response_msg = bot.send_message(tg_message.chat.id, "Укажи студента и тэг")
     bot.register_next_step_handler(response_msg, handle_tag_adding_end)
@@ -66,7 +67,7 @@ def handle_tag_adding_end(tg_message):
 
 
 # уведомить пользователей с указанным тэгом
-@bot.message_handler(commands=['notify_users_with_tag'])
+@bot.message_handler(commands=['tag'])
 def handle_users_with_tag_start(tg_message):
     response_msg = bot.send_message(tg_message.chat.id, "Укажи тэг")
     bot.register_next_step_handler(response_msg, handle_users_with_tag_end)
@@ -108,7 +109,7 @@ def handle_tag_add_end(tg_message):
 
 
 # получить названия и описания всех тэгов
-@bot.message_handler(commands=['get_all_tags'])
+@bot.message_handler(commands=['tags'])
 def handle_get_all_tags(tg_message):
     try:
         tags = user_tags.get_all_tags(db)
@@ -122,6 +123,12 @@ def handle_get_all_tags(tg_message):
 
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
+
+
+# регистрация
+@bot.message_handler(commands=['register_me'])
+def handle(message):
+    user_tags.register_user(message.from_user, db)
 
 
 # прислать текущие уроки
@@ -152,6 +159,35 @@ def send_message(message):
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 
+# вывести FAQ
+@bot.message_handler(commands=['faq'])
+def send_message(message):
+    text = retrieve_faq(db)
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# перезаписать FAQ
+@bot.message_handler(commands=['faq_change'])
+def send_message(message):
+    text = 'В ответе на это сообщение пришлите новый текст FAQ'
+    response_msg = bot.send_message(message.chat.id, text, parse_mode="html")
+
+    def _override_faq(new_text):
+        override_faq(db, new_text.text)
+        text = 'FAQ перезаписан'
+        bot.send_message(message.chat.id, text, parse_mode="html")
+
+    bot.register_next_step_handler(response_msg, _override_faq)
+
+
+# очистить FAQ
+@bot.message_handler(commands=['faq_flush'])
+def send_message(message):
+    flush_faq(db)
+    text = 'FAQ очищен'
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
 # получить информацию о преподавателях
 @bot.message_handler(commands=['get_teacher_info'])
 def get_teacher_info_prepare(message):
@@ -177,16 +213,24 @@ def get_teacher_info(message):
 @bot.message_handler(commands=['help'])
 def send_message(message):
     _commands = ['<b>Доступные команды</b>\n',
+                 '<b>Расписание</b>',
                  '/now - текущие занятия',
                  '/next - следующие занятия',
                  '/today - расписание на сегодня',
                  '/tomorrow - расписание на завтра',
-                 '/help - помощь',
+                 '\n<b>Получение сведений</b>',
+                 '/faq - вывести FAQ',
+                 '/faq_change - изменить FAQ',
+                 '/faq_flush - очистить FAQ',
+                 '/get_teacher_info - получить информацию о преподавателе',
+                 '\n<b>Роли и тэги</b>',
+                 '/register_me - регистрация в чате'
                  '/create_tag - создать новый тэг',
-                 '/get_all_tags - получить список тэгов',
-                 '/add_tag_to_user - прикрепить к пользователю тэг',
-                 '/notify_users_with_tag - уведомить пользователей с указанным тэгом',
-                 '/get_teacher_info - получить информацию о преподавателе'
+                 '/tags - получить список тэгов',
+                 '/add_tag - прикрепить к пользователю тэг',
+                 '/tag - уведомить пользователей с указанным тэгом',
+                 '\n<b>Прочее</b>',
+                 '/help - помощь'
                  ]
     text = '\n'.join(_commands)
     bot.send_message(message.chat.id, text, parse_mode="html")
