@@ -44,6 +44,19 @@ def add_tags_to_user(username, _tags, db):
         users.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': db_user['tags']}})
 
 
+def remove_tags_from_user(username, _tags, db):
+    print("@" + __name__ + ": removing tags from user " + username)
+    users_collection = db["users"]
+
+    user = users_collection.find_one({'tg_user_name': username})
+    user_tags = user["tags"]
+
+    for tag in _tags:
+        user_tags.remove(tag)
+
+    users_collection.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': user_tags}})
+
+
 def get_users_with_tags(tags, _type, chat, bot, db):
     users = db["users"]
 
@@ -65,7 +78,7 @@ def get_users_with_tags(tags, _type, chat, bot, db):
     return tg_users
 
 
-def add_tag(tag_name, tag_description, db):
+def create_tag(tag_name, tag_description, db):
     print("@" + __name__ + ": creating tag " + tag_name)
     tags = db["tags"]
     db_tag = tags.find_one({'tag_name': tag_name})
@@ -76,6 +89,37 @@ def add_tag(tag_name, tag_description, db):
         'tag_name': tag_name,
         'tag_description': tag_description
     })
+
+
+def destroy_tag(tag_name, db):
+    print("@" + __name__ + ": destroying tag " + tag_name)
+    users_collection = db["users"]
+    tag_collection = db["tags"]
+
+    db_tag = tag_collection.find({'tag_name': tag_name})
+
+    if db_tag is None:
+        raise UserTagsException("Такого тэга не существует")
+
+    tag_collection.delete_one({'tag_name': tag_name})
+
+    users_with_tag = users_collection.find({'tags': {'$in': [tag_name]}})
+
+    for user in users_with_tag:
+        user_tags = user["tags"]
+        user_tags.remove(tag_name)
+        users_collection.find_one_and_update({'tg_user_name': user['tg_user_name']}, {'$set': {'tags': user_tags}})
+
+
+def get_tags_for_user(username, db):
+    users_collection = db["users"]
+
+    db_user = users_collection.find_one({'tg_user_name': username})
+
+    if db_user is None:
+        raise UserTagsException("такого пользователя не существует")
+
+    return db_user["tags"]
 
 
 def get_all_tags(db):
