@@ -42,9 +42,9 @@ def add_tag_to_user(username, tag_name, db):
     users.find_one_and_update({'tg_user_name': username}, {'$set': {'tags': db_user['tags']}})
 
 
-def get_users_with_tag(tag, chat, bot, db):
+def get_users_with_tag(tags, chat, bot, db):
     users = db["users"]
-    db_users = users.find({'tags': tag})
+    db_users = users.find({'tags': {'$all': tags}})
 
     tg_users = list()
 

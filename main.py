@@ -75,9 +75,9 @@ def handle_users_with_tag_start(tg_message):
 
 def handle_users_with_tag_end(tg_message):
     try:
-        tag = tg_message.text
+        tags = tg_message.text.split(" ")
 
-        users = user_tags.get_users_with_tag(tag, tg_message.chat, bot, db)
+        users = user_tags.get_users_with_tag(tags, tg_message.chat, bot, db)
 
         users_msg = ""
 
@@ -234,6 +234,19 @@ def send_message(message):
                  ]
     text = '\n'.join(_commands)
     bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+# handle new chat members
+@bot.message_handler(content_types=['new_chat_members'])
+def handle_new_chat_members(tg_message):
+    print(tg_message.text)
+    if tg_message.new_chat_members is not None:
+        for newUser in tg_message.new_chat_members:
+            try:
+                user_tags.register_user(newUser, db)
+            except user_tags.UserTagsException as e:
+                bot.send_message(tg_message.chat.id, e.msg)
+            bot.send_message(tg_message.chat.id, "Добро пожаловать, " + newUser.first_name + "!")
 
 
 # запустить работу бота в бесконечном цикле
