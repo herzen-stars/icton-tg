@@ -166,18 +166,36 @@ def send_message(message):
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 
-# перезаписать FAQ
-@bot.message_handler(commands=['faq_change'])
+# добавить пункт в FAQ
+@bot.message_handler(commands=['faq_add'])
 def send_message(message):
-    text = 'В ответе на это сообщение пришлите новый текст FAQ'
+    text = 'В ответе на это сообщение пришлите текст нового пункта'
     response_msg = bot.send_message(message.chat.id, text, parse_mode="html")
 
-    def _override_faq(new_text):
-        override_faq(db, new_text.text)
-        text = 'FAQ перезаписан'
+    def _add_to_faq(new_text):
+        add_to_faq(db, new_text.text)
+        text = 'FAQ обновлен'
         bot.send_message(message.chat.id, text, parse_mode="html")
 
-    bot.register_next_step_handler(response_msg, _override_faq)
+    bot.register_next_step_handler(response_msg, _add_to_faq)
+
+
+# удалить пункт из FAQ
+@bot.message_handler(commands=['faq_remove'])
+def send_message(message):
+    text = 'В ответе на это сообщение пришлите номер удаляемого пункта'
+    response_msg = bot.send_message(message.chat.id, text, parse_mode="html")
+
+    def _remove_from_faq(new_text):
+
+        try:
+            remove_from_faq(db, int(new_text.text))
+            text = 'FAQ обновлен'
+        except ValueError:
+            text = 'Ошибка: ожидалось число. FAQ оставлен без изменений.'
+        bot.send_message(message.chat.id, text, parse_mode="html")
+
+    bot.register_next_step_handler(response_msg, _remove_from_faq)
 
 
 # очистить FAQ
@@ -220,15 +238,17 @@ def send_message(message):
                  '/tomorrow - расписание на завтра',
                  '\n<b>Получение сведений</b>',
                  '/faq - вывести FAQ',
-                 '/faq_change - изменить FAQ',
                  '/faq_flush - очистить FAQ',
+                 '/faq_add - добавить пункт в FAQ',
+                 '/faq_remove - удалить пункт из FAQ',
                  '/teacher - получить информацию о преподавателе',
                  '\n<b>Роли и тэги</b>',
                  '/register_me - регистрация в чате',
                  '/create_tag - создать новый тэг',
                  '/tags - получить список тэгов',
                  '/add_tag - прикрепить к пользователю тэг',
-                 '/tag - уведомить пользователей с указанным тэгом',
+                 '/tag - уведомить всех пользователей с указанными тэгами',
+                 '/tag_all - уведомить только пользователей, имеющих все указанные теги',
                  '\n<b>Прочее</b>',
                  '/help - помощь'
                  ]
