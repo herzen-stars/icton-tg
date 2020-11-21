@@ -1,0 +1,95 @@
+{
+    "Расписание": [
+        {
+            "command": "now",
+            "description": "текущие пары",
+            "adm_access": false
+        },
+        {
+            "command": "next",
+            "description": "следующие пары",
+            "adm_access": false
+        },
+        {
+            "command": "today",
+            "description": "расписание на сегодня",
+            "adm_access": false
+        },
+        {
+            "command": "tomorrow",
+            "description": "расписание на завтра",
+            "adm_access": false
+        }
+    ],
+    "Получение сведений": [
+        {
+            "command": "faq",
+            "description": "вывести FAQ",
+            "adm_access": false
+        },
+        {
+            "command": "faq_add",
+            "description": "добавить пункт в FAQ",
+            "adm_access": true
+        },
+        {
+            "command": "faq_remove",
+            "description": "удалить пункт из FAQ",
+            "adm_access": true
+        },
+        {
+            "command": "faq_flush",
+            "description": "очистить FAQ",
+            "adm_access": true
+        },
+        {
+            "command": "teacher",
+            "description": "получить информацию о преподавателе",
+            "adm_access": false
+        }
+    ],
+    "Роли и теги": [
+        {
+            "command": "reg",
+            "description": "регистрация в чате",
+            "adm_access": false
+        },
+        {
+            "command": "tag",
+            "description": "уведомить всех пользователей с указанными тегами",
+            "adm_access": false
+        },
+        {
+            "command": "tag_all",
+            "description": "уведомить только пользователей, имеющих все указанные теги",
+            "adm_access": false
+        },
+        {
+            "command": "create_tag",
+            "description": "создать новый тег",
+            "adm_access": true
+        },
+        {
+            "command": "add_tags",
+            "description": "прикрепить к пользователю тег",
+            "adm_access": true
+        },
+        {
+            "command": "tags",
+            "description": "список доступных тегов",
+            "adm_access": false
+        }
+    ],
+    "Прочее": [
+        {
+            "command": "help",
+            "description": "справка по командам",
+            "adm_access": false
+        },
+        {
+            "command": "help_full",
+            "description": "справка по всем командам (включая доступные только администраторам)",
+            "adm_access": false
+        }
+    ]
+}

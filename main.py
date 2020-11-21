@@ -4,6 +4,7 @@ import user_tags
 from current_lesson import *
 import teachers_parser
 from faq_feature import *
+from better_help import *
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -191,7 +192,7 @@ def handle_get_all_tags(tg_message):
 
 
 # регистрация
-@bot.message_handler(commands=['register_me'])
+@bot.message_handler(commands=['reg'])
 def handle(tg_message):
     bot.delete_message(tg_message.chat.id, tg_message.message_id)
 
@@ -336,29 +337,13 @@ def handle_left_chat_member(tg_message):
 # прислать подсказку с доступными командами
 @bot.message_handler(commands=['help'])
 def send_message(message):
-    _commands = ['<b>Доступные команды</b>\n',
-                 '<b>Расписание</b>',
-                 '/now - текущая пара',
-                 '/next - следующая пара',
-                 '/today - расписание на сегодня',
-                 '/tomorrow - расписание на завтра',
-                 '\n<b>Получение сведений</b>',
-                 '/faq - вывести FAQ',
-                 '/faq_flush - очистить FAQ - <b><u>адм.</u></b>',
-                 '/faq_add - добавить пункт в FAQ - <b><u>адм.</u></b>',
-                 '/faq_remove - удалить пункт из FAQ - <b><u>адм.</u></b>',
-                 '/teacher - получить информацию о преподавателе',
-                 '\n<b>Роли и тэги</b>',
-                 '/register_me - регистрация в чате',
-                 '/create_tag - создать новый тэг - <b><u>адм.</u></b>',
-                 '/tags - получить список тэгов',
-                 '/add_tags - прикрепить к пользователю тэг - <b><u>адм.</u></b>',
-                 '/tag - уведомить всех пользователей с указанными тэгами',
-                 '/tag_all - уведомить только пользователей, имеющих все указанные теги',
-                 '\n<b>Прочее</b>',
-                 '/help - помощь'
-                 ]
-    text = '\n'.join(_commands)
+    text = help_message(False)
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
+@bot.message_handler(commands=['help_full'])
+def send_message(message):
+    text = help_message(True)
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 
