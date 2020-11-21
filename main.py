@@ -76,8 +76,35 @@ def handle_tag_adding_end(tg_message):
                          "Тэги " + " ".join(tags) + " успешно прикреплены к пользователю " + username)
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
-    except Exception:
-        bot.send_message(tg_message.chat.id, "Упс, что-то пошло не так")
+
+
+@bot.message_handler(commands=['remove_tags'])
+def remove_tags_start(tg_message):
+    try:
+        check_user_for_admin_right(tg_message.from_user, tg_message.chat)
+        response_msg = bot.send_message(tg_message.chat.id, "Укажите пользователя и тэги")
+        bot.register_next_step_handler(response_msg, remove_tags_end)
+    except NoAdminRights as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+def remove_tags_end(tg_message):
+    try:
+        username, tags = tg_message.text.split(' ', 1)
+
+        if username == "" or tags == "":
+            bot.send_message(tg_message.chat.id, "Упс, недостаточно аргументов")
+            return
+
+        username = username[1:]
+        tags = tags.split(" ")
+
+        user_tags.remove_tags_from_user(username, tags, db)
+
+        bot.send_message(tg_message.chat.id,
+                         "Тэги " + " ".join(tags) + " успешно откреплены от пользователя " + username)
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
 
 
 # уведомить пользователей с хотя бы одним из указанных тэгов
@@ -146,18 +173,18 @@ def handle_tag_end(tg_message, original_message, info_message, _type):
 
 # создать тэг в бд
 @bot.message_handler(commands=['create_tag'])
-def handle_tag_add_start(tg_message):
+def handle_create_tag_start(tg_message):
     try:
         check_user_for_admin_right(tg_message.from_user, tg_message.chat)
 
         response_msg = bot.send_message(tg_message.chat.id, "Укажи название и описание тэга")
-        bot.register_next_step_handler(response_msg, handle_tag_add_end)
+        bot.register_next_step_handler(response_msg, handle_create_tag_end)
 
     except NoAdminRights as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
-def handle_tag_add_end(tg_message):
+def handle_create_tag_end(tg_message):
     try:
         index = tg_message.text.find(" ")
         if index != -1:
@@ -166,10 +193,50 @@ def handle_tag_add_end(tg_message):
             tag_name = tg_message.text
             tag_description = ""
 
-        user_tags.add_tag(tag_name, tag_description, db)
+        user_tags.create_tag(tag_name, tag_description, db)
 
         bot.send_message(tg_message.chat.id, "Тэг " + tag_name + " успешно создан")
 
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+# удалить тэг из бд и открепить всех пользователей от него
+@bot.message_handler(commands=['destroy_tag'])
+def handle_destroy_tag_start(tg_message):
+    try:
+        check_user_for_admin_right(tg_message.from_user, tg_message.chat)
+        response_msg = bot.send_message(tg_message.chat.id, "Укажи имя тэга")
+        bot.register_next_step_handler(response_msg, handle_destroy_tag_end)
+    except NoAdminRights as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+def handle_destroy_tag_end(tg_message):
+    try:
+        user_tags.destroy_tag(tg_message.text, db)
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
+
+
+# получить тэги прикрепленные к даному пользователю
+@bot.message_handler(commands=['user_tags'])
+def handle_user_tags_begin(tg_message):
+    response_msg = bot.send_message(tg_message.chat.id, "Укажите пользователя")
+    bot.register_next_step_handler(response_msg, handle_user_tags_end)
+
+
+def handle_user_tags_end(tg_message):
+    try:
+        username = tg_message.text[1:]
+
+        tags = user_tags.get_tags_for_user(username, db)
+
+        message = "К пользователю " + username + " прикреплены соедующие тэги:\n"
+        for tag in tags:
+            message += tag + "\n"
+
+        bot.send_message(tg_message.chat.id, message)
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
