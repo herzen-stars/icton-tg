@@ -189,7 +189,7 @@ def send_message(message):
 
 
 # получить информацию о преподавателях
-@bot.message_handler(commands=['get_teacher_info'])
+@bot.message_handler(commands=['teacher'])
 def get_teacher_info_prepare(message):
     msg = bot.send_message(
         message.chat.id, 'Отправьте имя преподавателя.', parse_mode="html"
@@ -222,7 +222,7 @@ def send_message(message):
                  '/faq - вывести FAQ',
                  '/faq_change - изменить FAQ',
                  '/faq_flush - очистить FAQ',
-                 '/get_teacher_info - получить информацию о преподавателе',
+                 '/teacher - получить информацию о преподавателе',
                  '\n<b>Роли и тэги</b>',
                  '/register_me - регистрация в чате',
                  '/create_tag - создать новый тэг',
