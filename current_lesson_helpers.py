@@ -8,12 +8,6 @@ def current_time():
     return _current_time
 
 
-# returns current time in XX:XX format
-def log_time():
-    _current_time = str(datetime.now().time())[:5]
-    return _current_time
-
-
 # calculate schedule's expiration date
 def expiration_date():
     today = datetime.now()
@@ -30,3 +24,17 @@ def expired(timestamp_):
         return True
     else:
         return False
+
+
+# получить название дня недели
+def get_dow_name(dow_no):
+    days = {
+        0: 'Понедельник',
+        1: 'Вторник',
+        2: 'Среда',
+        3: 'Четверг',
+        4: 'Пятница',
+        5: 'Суббота',
+        6: 'Воскресенье'
+    }
+    return days[dow_no]

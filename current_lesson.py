@@ -70,6 +70,7 @@ else:
         schedule = json.load(file)
 
 
+# текущие уроки для одной группы
 def current_lesson_for_group(_schedule):
     dow = datetime.now().weekday()
     if dow == 6:
@@ -93,6 +94,8 @@ def current_lesson_for_group(_schedule):
 
     return None
 
+
+# текущие уроки для всех групп в конфиге
 def current_lesson():
     raw_return = {}
     config = config_file['groups']
@@ -125,6 +128,8 @@ def current_lesson():
 
     return message
 
+
+# следующие уроки для одной группы
 def next_lesson_for_group(_schedule):
     dow = datetime.now().weekday()
     if dow == 6:
@@ -143,6 +148,8 @@ def next_lesson_for_group(_schedule):
 
     return None
 
+
+# следующие уроки для всех групп в конфиге
 def next_lesson():
     raw_return = {}
     config = config_file['groups']
@@ -173,15 +180,12 @@ def next_lesson():
 
     return message
 
+
+# расписание на завтра для всех групп
 def schedule_for_tomorrow():
-    dow = datetime.now().weekday() + 1
-    if dow == 7:
+    dow = (datetime.now().weekday() + 1) % 7  # порядковый номер завтрашнего дня
+    if dow == 0:  # завтра воскресенье
         return 'На завтра занятия не запланированы'
-    elif dow == 8:
-        dow = 1
-        schedules = []
-        for _group in schedule:
-            schedules.append(_group[dow - 1])
     else:
         schedules = []
         for _group in schedule:
@@ -191,13 +195,15 @@ def schedule_for_tomorrow():
     counter = 0
     group_ids = []
 
-    # get froup ids
+    # получить id групп
     for _group in config_file["groups"]:
         entry = f"{_group['group_id']}-{_group['subgroup']}"
         group_ids.append(entry)
 
+    # собрать сообщение для бота
+    dow_name = get_dow_name(dow).lower()
     for _schedule in schedules:
-        _return.append(f'\n<b>Расписание на завтра (гр. {group_ids[counter]}):</b>\n')
+        _return.append(f'\n<b>Расписание на завтра ({dow_name}) для гр. {group_ids[counter]}:</b>')
         counter += 1
         for lesson in _schedule:
             start = lesson['start_time']
@@ -205,9 +211,53 @@ def schedule_for_tomorrow():
             end = lesson['end_time']
             end = f'{end[0:2]}:{end[2:4]}'
             name = lesson['name']
+            link = lesson['course_link']
+            name = f'<a href="{link}">{name}</a>'
             _return.append(f'{start} - {end}: {name}')
         if 'завтра' in _return[-1]:
             _return.append('Занятий не запланировано')
 
+    # вернуть готовое сообщение
+    _return = '\n'.join(_return)
+    return _return
+
+
+# расписание на сегодня для всех групп
+def schedule_for_today():
+    dow = datetime.now().weekday()  # порядковый номер сегодняшнего дня
+    if dow == 7:  # воскресенье
+        return 'Занятия не запланированы'
+    else:
+        schedules = []
+        for _group in schedule:
+            schedules.append(_group[dow])
+
+    _return = []
+    counter = 0
+    group_ids = []
+
+    # получить id групп
+    for _group in config_file["groups"]:
+        entry = f"{_group['group_id']}-{_group['subgroup']}"
+        group_ids.append(entry)
+
+    # собрать сообщение для бота
+    dow_name = get_dow_name(dow).lower()
+    for _schedule in schedules:
+        _return.append(f'\n<b>Расписание на сегодня ({dow_name}) для гр. {group_ids[counter]}:</b>')
+        counter += 1
+        for lesson in _schedule:
+            start = lesson['start_time']
+            start = f'{start[0:2]}:{start[2:4]}'
+            end = lesson['end_time']
+            end = f'{end[0:2]}:{end[2:4]}'
+            name = lesson['name']
+            link = lesson['course_link']
+            name = f'<a href="{link}">{name}</a>'
+            _return.append(f'{start} - {end}: {name}')
+        if 'сегодня' in _return[-1]:
+            _return.append('Занятий не запланировано')
+
+    # вернуть готовое сообщение
     _return = '\n'.join(_return)
     return _return

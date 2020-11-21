@@ -2,7 +2,7 @@ import pymongo
 import telebot
 import sys
 import user_tags
-from current_lesson import current_lesson, next_lesson, schedule_for_tomorrow
+from current_lesson import current_lesson, next_lesson, schedule_for_tomorrow, schedule_for_today
 import teachers_parser
 
 # получить ключи доступа из окружения
@@ -145,6 +145,13 @@ def send_message(message):
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 
+# вывести расписание на сегодня
+@bot.message_handler(commands=['today'])
+def send_message(message):
+    text = schedule_for_today()
+    bot.send_message(message.chat.id, text, parse_mode="html")
+
+
 # получить информацию о преподавателях
 @bot.message_handler(commands=['get_teacher_info'])
 def get_teacher_info_prepare(message):
@@ -172,6 +179,7 @@ def send_message(message):
     _commands = ['<b>Доступные команды</b>\n',
                  '/now - текущие занятия',
                  '/next - следующие занятия',
+                 '/today - расписание на сегодня',
                  '/tomorrow - расписание на завтра',
                  '/help - помощь',
                  '/create_tag - создать новый тэг',

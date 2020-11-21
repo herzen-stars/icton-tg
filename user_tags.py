@@ -58,7 +58,7 @@ def get_users_with_tag(tag, chat, bot, db):
 
 
 def add_tag(tag_name, tag_description, db):
-    print("@" + __name__ + ": creating tag '" + tag_name)
+    print("@" + __name__ + ": creating tag " + tag_name)
     tags = db["tags"]
     db_tag = tags.find_one({'tag_name': tag_name})
     if db_tag is not None:
