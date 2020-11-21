@@ -62,53 +62,86 @@ def handle_tag_adding_end(tg_message):
         user_tags.add_tags_to_user(username, tags, db)
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
+    except Exception:
+        bot.send_message(tg_message.chat.id, "Упс, что-то пошло не так")
 
 
 # уведомить пользователей с хотя бы одним из указанных тэгов
 @bot.message_handler(commands=['tag'])
 def handle_tag_start(tg_message):
+    if tg_message.reply_to_message is None:
+        bot.send_message(tg_message.chat.id, "Ответь этой командой на сообщение, под которым будут отмечены пользователи")
+        return
+
+    # удалить сообщение с командой, оно нам больше не нужно
+    bot.delete_message(tg_message.chat.id, tg_message.message_id)
+
+    # отправить подсказку и перенаправить ответ
     response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги")
-    bot.register_next_step_handler(response_msg, handle_tag_end)
+    bot.register_next_step_handler(response_msg, handle_tag_end, tg_message.reply_to_message, response_msg)
 
 
-def handle_tag_end(tg_message):
-    try:
-        tags = tg_message.text.split(" ")
+def handle_tag_end(tg_message, original_message, info_message):
+    # удалить сообщение "Укажи тэги"
+    bot.delete_message(info_message.chat.id, info_message.message_id)
 
-        users = user_tags.get_users_with_tags(tags, tg_message.chat, bot, db)
-
-        users_msg = ""
-
-        for user in users:
-            user_msg = "@"
-            user_msg += str(user.username) + " "
-            users_msg += user_msg
-        bot.send_message(tg_message.chat.id, users_msg)
-
-    except user_tags.UserTagsException as e:
-        bot.send_message(tg_message.chat.id, e.msg)
+    # обработать уведомление по его типу
+    handle_tag(original_message, tg_message, "")
 
 
 # уведомить пользователей со всеми указанными тэгов
 @bot.message_handler(commands=['tag_all'])
 def handle_tag_all_start(tg_message):
+    if tg_message.reply_to_message is None:
+        bot.send_message(tg_message.chat.id, "Ответь этой командой на сообщение, под которым будут отмечены пользователи")
+        return
+
+    # удалить сообщение с командой, оно нам больше не нужно
+    bot.delete_message(tg_message.chat.id, tg_message.message_id)
+
+    # отправить подсказку и перенаправить ответ
     response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги")
-    bot.register_next_step_handler(response_msg, handle_tag_all_end)
+    bot.register_next_step_handler(response_msg, handle_tag_end, tg_message.reply_to_message, response_msg)
 
 
-def handle_tag_all_end(tg_message):
+def handle_tag_all_end(tg_message, original_message, info_message):
+    # удалить сообщение "Укажи тэги"
+    bot.delete_message(info_message.chat.id, info_message.message_id)
+
+    # обработать уведомление по его типу
+    handle_tag(original_message, tg_message, "all")
+
+
+# главный обработчик уведомления пользователей по тэгам
+def handle_tag(original_message, tg_message, _type):
     try:
+        # распарсить тэги
         tags = tg_message.text.split(" ")
 
-        users = user_tags.get_users_with_all_tags(tags, tg_message.chat, bot, db)
+        # получить пользователей по тэгам
+        users = user_tags.get_users_with_tags(tags, _type, tg_message.chat, bot, db)
 
+        # отформатировать строку с упоминаниями
         users_msg = ""
-
         for user in users:
             user_msg = "@"
             user_msg += str(user.username) + " "
             users_msg += user_msg
-        bot.send_message(tg_message.chat.id, users_msg)
+
+        # имя отправителя
+        sender_message = original_message.from_user.username + " говорит:\n\n"
+
+        # итоговое сообщение
+        final_msg = sender_message + original_message.text + "\n\n" + users_msg
+
+        # удалить изначальное сообщение
+        bot.delete_message(original_message.chat.id, original_message.message_id)
+
+        # отправить наше отформатированное сообщение с отметками в конце
+        bot.send_message(tg_message.chat.id, final_msg)
+
+        # удалить сообщение с указанными тэгами
+        bot.delete_message(tg_message.chat.id, tg_message.message_id)
 
     except user_tags.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
@@ -150,8 +183,11 @@ def handle_get_all_tags(tg_message):
 
 # регистрация
 @bot.message_handler(commands=['register_me'])
-def handle(message):
-    user_tags.register_user(message.from_user, db)
+def handle(tg_message):
+    try:
+        user_tags.register_user(tg_message.from_user, db)
+    except user_tags.UserTagsException as e:
+        bot.send_message(tg_message.chat.id, e.msg)
 
 
 # прислать текущие уроки
@@ -232,10 +268,10 @@ def send_message(message):
 # получить информацию о преподавателях
 @bot.message_handler(commands=['teacher'])
 def get_teacher_info_prepare(message):
-    msg = bot.send_message(
+    _msg = bot.send_message(
         message.chat.id, 'Отправьте имя преподавателя.', parse_mode="html"
         )
-    bot.register_next_step_handler(msg, get_teacher_info)
+    bot.register_next_step_handler(_msg, get_teacher_info)
 
 
 def get_teacher_info(message):
@@ -250,13 +286,35 @@ def get_teacher_info(message):
     bot.send_message(message.chat.id, result, parse_mode="html")
 
 
+# handle new chat members
+@bot.message_handler(content_types=['new_chat_members'])
+def handle_new_chat_members(tg_message):
+    if tg_message.new_chat_members is not None:
+        for newUser in tg_message.new_chat_members:
+            try:
+                user_tags.register_user(newUser, db)
+                bot.send_message(tg_message.chat.id, "Добро пожаловать, " + newUser.first_name + "!")
+            except user_tags.UserTagsException as e:
+                if e.msg == "Error: user already exists":
+                    bot.send_message(tg_message.chat.id, "Добро пожаловать обратно, " + newUser.first_name + "!")
+                else:
+                    bot.send_message(tg_message.chat.id, e.msg)
+
+
+# handle chat member left
+@bot.message_handler(content_types=['left_chat_member'])
+def handle_left_chat_member(tg_message):
+    if tg_message.left_chat_member is not None:
+        bot.send_message(tg_message.chat.id, "Мы будем скучать, " + tg_message.left_chat_member.first_name + "!")
+
+
 # прислать подсказку с доступными командами
 @bot.message_handler(commands=['help'])
 def send_message(message):
     _commands = ['<b>Доступные команды</b>\n',
                  '<b>Расписание</b>',
-                 '/now - текущие занятия',
-                 '/next - следующие занятия',
+                 '/now - текущая пара',
+                 '/next - следующая пара',
                  '/today - расписание на сегодня',
                  '/tomorrow - расписание на завтра',
                  '\n<b>Получение сведений</b>',
@@ -269,7 +327,7 @@ def send_message(message):
                  '/register_me - регистрация в чате',
                  '/create_tag - создать новый тэг',
                  '/tags - получить список тэгов',
-                 '/add_tag - прикрепить к пользователю тэг',
+                 '/add_tags - прикрепить к пользователю тэг',
                  '/tag - уведомить всех пользователей с указанными тэгами',
                  '/tag_all - уведомить только пользователей, имеющих все указанные теги',
                  '\n<b>Прочее</b>',
@@ -277,19 +335,6 @@ def send_message(message):
                  ]
     text = '\n'.join(_commands)
     bot.send_message(message.chat.id, text, parse_mode="html")
-
-
-# handle new chat members
-@bot.message_handler(content_types=['new_chat_members'])
-def handle_new_chat_members(tg_message):
-    print(tg_message.text)
-    if tg_message.new_chat_members is not None:
-        for newUser in tg_message.new_chat_members:
-            try:
-                user_tags.register_user(newUser, db)
-            except user_tags.UserTagsException as e:
-                bot.send_message(tg_message.chat.id, e.msg)
-            bot.send_message(tg_message.chat.id, "Добро пожаловать, " + newUser.first_name + "!")
 
 
 # запустить работу бота в бесконечном цикле
