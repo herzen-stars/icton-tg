@@ -12,7 +12,7 @@ def current_time():
 def expiration_date():
     today = datetime.now()
     last_monday = today - timedelta(days=today.weekday())
-    nearest_saturday = last_monday + timedelta(days=5)
+    nearest_saturday = last_monday + timedelta(days=5+7)
     timestamp = nearest_saturday.replace(hour=23, minute=59)
     return str(timestamp)[:-10]
 
