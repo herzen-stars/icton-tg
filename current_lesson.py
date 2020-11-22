@@ -183,7 +183,7 @@ def next_lesson():
 
 # расписание на завтра для всех групп
 def schedule_for_tomorrow():
-    dow = (datetime.now().weekday() + 1) % 7  # порядковый номер завтрашнего дня
+    dow = (datetime.now().weekday() + 1) % 6  # порядковый номер завтрашнего дня
     if dow == 0:  # завтра воскресенье
         return 'На завтра занятия не запланированы'
     else:
@@ -201,7 +201,7 @@ def schedule_for_tomorrow():
         group_ids.append(entry)
 
     # собрать сообщение для бота
-    dow_name = get_dow_name(dow).lower()
+    dow_name = get_dow_name(dow - 1).lower()
     for _schedule in schedules:
         _return.append(f'\n<b>Расписание на завтра ({dow_name}) для гр. {group_ids[counter]}:</b>')
         counter += 1
@@ -225,7 +225,7 @@ def schedule_for_tomorrow():
 # расписание на сегодня для всех групп
 def schedule_for_today():
     dow = datetime.now().weekday()  # порядковый номер сегодняшнего дня
-    if dow == 7:  # воскресенье
+    if dow == 6:  # воскресенье
         return 'Занятия не запланированы'
     else:
         schedules = []
@@ -242,7 +242,7 @@ def schedule_for_today():
         group_ids.append(entry)
 
     # собрать сообщение для бота
-    dow_name = get_dow_name(dow).lower()
+    dow_name = get_dow_name(dow - 1).lower()
     for _schedule in schedules:
         _return.append(f'\n<b>Расписание на сегодня ({dow_name}) для гр. {group_ids[counter]}:</b>')
         counter += 1
