@@ -20,6 +20,8 @@ def retrieve_faq(db):
 def add_to_faq(db, entry):
     messages = db['messages']
     old_faq = messages.find_one({'_id': 'faq'})['msg']
+    if '/faq_add' in old_faq[0]:
+        old_faq.pop(0)
     new_faq = old_faq
     new_faq.append(entry)
     messages.update_one({'_id': 'faq'}, {'$set': {'msg': new_faq}})
