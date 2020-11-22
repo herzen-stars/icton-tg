@@ -339,7 +339,7 @@ def handle_get_all_tags(tg_message):
 # регистрация
 @bot.message_handler(commands=['reg'])
 def handle(tg_message):
-    bot.delete_message(tg_message.chat.id, tg_message.message_id)
+    #bot.delete_message(tg_message.chat.id, tg_message.message_id)
 
     try:
         user_tags.register_user(tg_message.from_user, db)
