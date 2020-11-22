@@ -472,7 +472,8 @@ def handle_new_chat_members(tg_message):
         for newUser in tg_message.new_chat_members:
             try:
                 if newUser.id == bot.get_me().id:
-                    bot.send_message(tg_message.chat.id, "Всем привет!")
+                    bot.send_message(tg_message.chat.id, "Всем привет!\nПожалуйста, напишите мне все /reg, "
+                                                         "чтобы мы познакомились")
                 else:
                     user_tags.register_user(newUser, db)
                     bot.send_message(tg_message.chat.id, "Добро пожаловать, " + newUser.first_name + "!")
