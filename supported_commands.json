@@ -55,29 +55,49 @@
             "adm_access": false
         },
         {
+        "command": "tag_create",
+        "description": "создать новый тег",
+        "adm_access": true
+        },
+        {
+            "command": "tag_destroy",
+            "description": "удалить тег и открепить его от всех пользователей",
+            "adm_access": true
+        },
+        {
+            "command": "tag_add",
+            "description": "прикрепить к пользователю теги",
+            "adm_access": true
+        },
+        {
+            "command": "tag_remove",
+            "description": "открепить от пользователя теги",
+            "adm_access": true
+        },
+        {
+            "command": "tags",
+            "description": "получить список тегов",
+            "adm_access": false
+        },
+        {
             "command": "tag",
             "description": "уведомить всех пользователей с указанными тегами",
             "adm_access": false
         },
         {
-            "command": "tag_all",
+            "command": "tag_inc",
             "description": "уведомить только пользователей, имеющих все указанные теги",
             "adm_access": false
         },
         {
-            "command": "create_tag",
-            "description": "создать новый тег",
+            "command": "tag_mute",
+            "description": "замутить всех пользователей с указанными тегами",
             "adm_access": true
         },
         {
-            "command": "add_tags",
-            "description": "прикрепить к пользователю тег",
+            "command": "tag_unmute",
+            "description": "размутить всех пользователей с указанными тегами",
             "adm_access": true
-        },
-        {
-            "command": "tags",
-            "description": "список доступных тегов",
-            "adm_access": false
         }
     ],
     "Прочее": [
