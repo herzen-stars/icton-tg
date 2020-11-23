@@ -1,7 +1,7 @@
 import json
 import requests
 import sys
-from current_lesson_helpers import *
+from schedule_feature_utils import *
 from pathlib import Path
 from datetime import datetime
 
@@ -9,9 +9,9 @@ from datetime import datetime
 path = Path(__file__).parent.absolute()
 
 # Parsing config data, performing the initial checks
-c_path = path / "current_lesson.json"
+c_path = path / "schedule_feature_config.json"
 if not c_path.is_file():
-    print(f"{__name__}: current_lesson.json not found, exiting")
+    print(f"{__name__}: schedule_feature_config.json not found, exiting")
     sys.exit()
 else:
     with open(c_path, "r") as open_file:
@@ -21,7 +21,8 @@ else:
 # parsing schedule for today
 s_path = path / "schedule.json"
 
-if (not s_path.is_file()) or "schedule_expiration_date" not in config_file or expired(config_file["schedule_expiration_date"]):
+if (not s_path.is_file()) or "schedule_expiration_date" not in config_file or expired(
+        config_file["schedule_expiration_date"]):
     print("schedule.json not found or expired, attempting download")
 
     schedule = []
@@ -32,7 +33,7 @@ if (not s_path.is_file()) or "schedule_expiration_date" not in config_file or ex
             elif int(config["subgroup"]) > 0:
                 response = requests.get(
                     url=f"{config['schedule_provider_url']}?groupID={config['group_id']}&subgroup={int(config['subgroup']) - 1}"
-                                        )
+                )
             else:
                 print("Subgroup parameter in config is invalid")
                 raise ValueError
@@ -103,13 +104,12 @@ def current_lesson():
         group = f'{config[i]["group_id"]}_{config[i]["subgroup"]}'
         raw_return[group] = current_lesson_for_group(schedule[i])
 
-    message = []
-    message.append('<b>Занятия сейчас:</b>')
+    message = ['<b>Занятия сейчас:</b>']
 
     for group in raw_return:
         group_ = group.split('_')
 
-        if raw_return[group] == None:
+        if raw_return[group] is None:
             lesson = 'занятий нет'
         elif raw_return[group]['name'] == 'break':
             lesson = 'перерыв'
@@ -157,13 +157,12 @@ def next_lesson():
         group = f'{config[i]["group_id"]}_{config[i]["subgroup"]}'
         raw_return[group] = next_lesson_for_group(schedule[i])
 
-    message = []
-    message.append('<b>Следующее занятие:</b>')
+    message = ['<b>Следующее занятие:</b>']
 
     for group in raw_return:
         group_ = group.split('_')
 
-        if raw_return[group] == None:
+        if raw_return[group] is None:
             lesson = 'занятия на сегодня окончены'
         else:
             lesson = raw_return[group]['name']

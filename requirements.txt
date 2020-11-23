@@ -3,4 +3,3 @@ pyTelegramBotAPI
 dnspython
 requests
 bs4
-bs4

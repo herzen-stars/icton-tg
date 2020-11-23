@@ -1,10 +1,14 @@
+# local imports
+from faq_feature import *
+from help_feature import *
+from schedule_feature import *
+import tagging_feature
+import teacher_info_feature
+
+# external imports
 import pymongo
 import telebot
-import user_tags
-from current_lesson import *
-import teachers_parser
-from faq_feature import *
-from better_help import *
+
 
 # получить ключи доступа из окружения
 if len(sys.argv) < 3:
@@ -27,6 +31,7 @@ cluster = pymongo.MongoClient(
 db = cluster['Icton']
 
 
+# ошибка "недостаточно прав"
 class NoAdminRights(BaseException):
     msg = "Ошибка: у пользователя нет прав администратора"
 
@@ -73,14 +78,15 @@ def handle_tag_adding_end(tg_message, user):
         username = username[1:]
         tags = tags.split(" ")
 
-        user_tags.add_tags_to_user(username, tags, db)
+        tagging_feature.add_tags_to_user(username, tags, db)
 
         bot.send_message(tg_message.chat.id,
                          "Тэги " + " ".join(tags) + " успешно прикреплены к пользователю " + username)
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
+# открепить тег от пользователя
 @bot.message_handler(commands=['tag_remove'])
 def remove_tags_start(tg_message):
     try:
@@ -105,11 +111,11 @@ def remove_tags_end(tg_message, user):
         username = username[1:]
         tags = tags.split(" ")
 
-        user_tags.remove_tags_from_user(username, tags, db)
+        tagging_feature.remove_tags_from_user(username, tags, db)
 
         bot.send_message(tg_message.chat.id,
                          "Тэги " + " ".join(tags) + " успешно откреплены от пользователя " + username)
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -134,16 +140,16 @@ def handle_tag_mute_end(tg_message, user):
     try:
         tags = tg_message.text.split(" ")
 
-        users = user_tags.get_users_with_tags(tags, "", tg_message.chat, bot, db)
+        users = tagging_feature.get_users_with_tags(tags, "", tg_message.chat, bot, db)
         for user in users:
             bot.restrict_chat_member(tg_message.chat.id, user.id, False)
 
         bot.send_message(tg_message.chat.id, "Успех")
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
-# замутить пользователей по тэгам
+# размутить пользователей по тэгам
 @bot.message_handler(commands=['tag_unmute'])
 def handle_tag_unmute_start(tg_message):
     if tg_message.chat.type != "supergroup":
@@ -164,12 +170,12 @@ def handle_tag_unmute_end(tg_message, user):
     try:
         tags = tg_message.text.split(" ")
 
-        users = user_tags.get_users_with_tags(tags, "", tg_message.chat, bot, db)
+        users = tagging_feature.get_users_with_tags(tags, "", tg_message.chat, bot, db)
         for user in users:
             bot.restrict_chat_member(tg_message.chat.id, user.id, True, True, True, True, True, True)
 
         bot.send_message(tg_message.chat.id, "Успех")
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -196,7 +202,8 @@ def handle_tag_middle(tg_message, _type):
 
     # отправить подсказку и перенаправить ответ
     response_msg = bot.send_message(tg_message.chat.id, "Укажи тэги через пробел")
-    bot.register_next_step_handler(response_msg, handle_tag_end, tg_message.reply_to_message, response_msg, _type, tg_message.from_user)
+    bot.register_next_step_handler(response_msg, handle_tag_end, tg_message.reply_to_message, response_msg, _type,
+                                   tg_message.from_user)
 
 
 # главный обработчик уведомления пользователей по тэгам
@@ -212,7 +219,7 @@ def handle_tag_end(tg_message, original_message, info_message, _type, user):
         tags = tg_message.text.split(" ")
 
         # получить пользователей по тэгам
-        users = user_tags.get_users_with_tags(tags, _type, tg_message.chat, bot, db)
+        users = tagging_feature.get_users_with_tags(tags, _type, tg_message.chat, bot, db)
 
         # отформатировать строку с упоминаниями
         users_msg = ""
@@ -236,7 +243,7 @@ def handle_tag_end(tg_message, original_message, info_message, _type, user):
         # удалить сообщение с указанными тэгами
         bot.delete_message(tg_message.chat.id, tg_message.message_id)
 
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -265,11 +272,11 @@ def handle_create_tag_end(tg_message, user):
             tag_name = tg_message.text
             tag_description = ""
 
-        user_tags.create_tag(tag_name, tag_description, db)
+        tagging_feature.create_tag(tag_name, tag_description, db)
 
         bot.send_message(tg_message.chat.id, "Тэг " + tag_name + " успешно создан")
 
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -289,8 +296,8 @@ def handle_destroy_tag_end(tg_message, user):
         bot.register_next_step_handler(tg_message, handle_destroy_tag_end, user)
         return
     try:
-        user_tags.destroy_tag(tg_message.text, db)
-    except user_tags.UserTagsException as e:
+        tagging_feature.destroy_tag(tg_message.text, db)
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -308,14 +315,14 @@ def handle_user_tags_end(tg_message, user):
     try:
         username = tg_message.text[1:]
 
-        tags = user_tags.get_tags_for_user(username, db)
+        tags = tagging_feature.get_tags_for_user(username, db)
 
         message = "К пользователю " + username + " прикреплены соедующие тэги:\n"
         for tag in tags:
             message += tag + "\n"
 
         bot.send_message(tg_message.chat.id, message)
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -323,7 +330,7 @@ def handle_user_tags_end(tg_message, user):
 @bot.message_handler(commands=['tags'])
 def handle_get_all_tags(tg_message):
     try:
-        tags = user_tags.get_all_tags(db)
+        tags = tagging_feature.get_all_tags(db)
 
         message = ""
 
@@ -332,20 +339,18 @@ def handle_get_all_tags(tg_message):
 
         bot.send_message(tg_message.chat.id, message)
 
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
 # регистрация
 @bot.message_handler(commands=['reg'])
 def handle(tg_message):
-    #bot.delete_message(tg_message.chat.id, tg_message.message_id)
-
     try:
-        user_tags.register_user(tg_message.from_user, db)
+        tagging_feature.register_user(tg_message.from_user, db)
         bot.send_message(tg_message.chat.id,
                          "Пользователь " + tg_message.from_user.first_name + " успешно зарегестрирован.")
-    except user_tags.UserTagsException as e:
+    except tagging_feature.UserTagsException as e:
         bot.send_message(tg_message.chat.id, e.msg)
 
 
@@ -461,11 +466,11 @@ def get_teacher_info(tg_message, user):
 <b>Телефон: </b><code>22505</code>
 <b>E-mail: </b><code>herzen_bruhs@hello.world</code>'''
     else:
-        result = teachers_parser.parse_teacher(tg_message.text)
+        result = teacher_info_feature.parse_teacher(tg_message.text)
     bot.send_message(tg_message.chat.id, result, parse_mode="html")
 
 
-# handle new chat members
+# обработать вход участника в чат
 @bot.message_handler(content_types=['new_chat_members'])
 def handle_new_chat_members(tg_message):
     if tg_message.new_chat_members is not None:
@@ -475,16 +480,16 @@ def handle_new_chat_members(tg_message):
                     bot.send_message(tg_message.chat.id, "Всем привет!\nПожалуйста, напишите мне все /reg, "
                                                          "чтобы мы познакомились")
                 else:
-                    user_tags.register_user(newUser, db)
+                    tagging_feature.register_user(newUser, db)
                     bot.send_message(tg_message.chat.id, "Добро пожаловать, " + newUser.first_name + "!")
-            except user_tags.UserTagsException as e:
+            except tagging_feature.UserTagsException as e:
                 if e.msg == "Error: user already exists":
                     bot.send_message(tg_message.chat.id, "Добро пожаловать обратно, " + newUser.first_name + "!")
                 else:
                     bot.send_message(tg_message.chat.id, e.msg)
 
 
-# handle chat member left
+# обработать выход участника из чата
 @bot.message_handler(content_types=['left_chat_member'])
 def handle_left_chat_member(tg_message):
     if tg_message.left_chat_member is not None:
@@ -498,6 +503,7 @@ def send_message(message):
     bot.send_message(message.chat.id, text, parse_mode="html")
 
 
+# прислать подсказку с доступными командами (в т.ч. только для администраторов)
 @bot.message_handler(commands=['help_full'])
 def send_message(message):
     text = help_message(True)
