@@ -83,11 +83,12 @@ def current_lesson_for_group(_schedule):
         if int(lesson["start_time"]) <= current_time() <= int(lesson["end_time"]):
             return lesson
         elif not i + 1 == len(today):
-            if int(lesson["end_time"]) <= current_time() <= int(today[i + 1]["start_time"]):  # problem
+            if int(lesson["end_time"]) <= current_time() <= int(today[i + 1]["start_time"]):
                 return_ = {
                     "name": "break",
                     "start_time": lesson["end_time"],
-                    "end_time": today[i + 1]["start_time"]
+                    "end_time": today[i + 1]["start_time"],
+                    "type": ""
                 }
                 return return_
         else:
@@ -114,7 +115,7 @@ def current_lesson():
         elif raw_return[group]['name'] == 'break':
             lesson = 'перерыв'
         else:
-            lesson = raw_return[group]['name']
+            lesson = f"{raw_return[group]['name']} {raw_return[group]['type']}"
             link = raw_return[group]['course_link']
             lesson = f'<a href="{link}">{lesson}</a>'
 
@@ -163,9 +164,9 @@ def next_lesson():
         group_ = group.split('_')
 
         if raw_return[group] is None:
-            lesson = 'занятия на сегодня окончены'
+            lesson = 'занятий нет'
         else:
-            lesson = raw_return[group]['name']
+            lesson = f"{raw_return[group]['name']} {raw_return[group]['type']}"
             link = raw_return[group]['course_link']
             lesson = f'<a href="{link}">{lesson}</a>'
 
@@ -188,7 +189,7 @@ def schedule_for_tomorrow():
     else:
         schedules = []
         for _group in schedule:
-            schedules.append(_group[dow - 1])
+            schedules.append(_group[dow])
 
     _return = []
     counter = 0
@@ -200,7 +201,7 @@ def schedule_for_tomorrow():
         group_ids.append(entry)
 
     # собрать сообщение для бота
-    dow_name = get_dow_name(dow - 1).lower()
+    dow_name = get_dow_name(dow).lower()
     for _schedule in schedules:
         _return.append(f'\n<b>Расписание на завтра ({dow_name}) для гр. {group_ids[counter]}:</b>')
         counter += 1
@@ -212,7 +213,8 @@ def schedule_for_tomorrow():
             name = lesson['name']
             link = lesson['course_link']
             name = f'<a href="{link}">{name}</a>'
-            _return.append(f'{start} - {end}: {name}')
+            type = lesson['type']
+            _return.append(f'{start} - {end}: {name} {type}')
         if 'завтра' in _return[-1]:
             _return.append('Занятий не запланировано')
 
@@ -241,7 +243,7 @@ def schedule_for_today():
         group_ids.append(entry)
 
     # собрать сообщение для бота
-    dow_name = get_dow_name(dow - 1).lower()
+    dow_name = get_dow_name(dow).lower()
     for _schedule in schedules:
         _return.append(f'\n<b>Расписание на сегодня ({dow_name}) для гр. {group_ids[counter]}:</b>')
         counter += 1
@@ -253,7 +255,8 @@ def schedule_for_today():
             name = lesson['name']
             link = lesson['course_link']
             name = f'<a href="{link}">{name}</a>'
-            _return.append(f'{start} - {end}: {name}')
+            type = lesson['type']
+            _return.append(f'{start} - {end}: {name} {type}')
         if 'сегодня' in _return[-1]:
             _return.append('Занятий не запланировано')
 
